@@ -1,0 +1,104 @@
+{
+    "variables": {
+        "proxmox_api": "{{env `PROXMOX_API`}}",
+        "proxmox_node": "{{env `PROXMOX_NODE`}}",
+        "proxmox_username": "{{env `PROXMOX_USERNAME`}}",
+        "proxmox_password": "{{env `PROXMOX_PASSWORD`}}",
+        "proxmox_storage_pool": "backup",
+        "proxmox_storage_pool_type": "directory",
+        "proxmox_storage_format": "qcow2",
+        "proxmox_iso_pool": "backup:iso",
+        "alpine_image": "alpine-virt-3.12.1-x86_64.iso",
+        "template_id": "1001",
+        "template_name": "alpine-3-template",
+        "template_description": "Alpine Linux 3.12.1 x86_64\nBuilt: {{isotime \"15:04:05 02.01.2006\"}}"
+    },
+    "builders": [
+        {
+            "type": "proxmox",
+            "proxmox_url": "{{user `proxmox_api`}}",
+            "node": "{{user `proxmox_node`}}",
+            "username": "{{user `proxmox_username`}}",
+            "password": "{{user `proxmox_password`}}",
+            "insecure_skip_tls_verify": true,
+            "iso_file": "{{user `proxmox_iso_pool`}}/{{user `alpine_image`}}",
+            "http_directory": "http",
+            "vm_id": "{{user `template_id`}}",
+            "cores": 1,
+            "memory": 512,
+            "os": "l26",
+            "scsi_controller": "virtio-scsi-pci",
+
+            "ssh_username": "root",
+            "ssh_password": "root",
+
+            "network_adapters": [
+                {
+                    "model": "virtio",
+                    "bridge": "vmbr0"
+                }
+            ],
+            "disks": [
+                {
+                    "type": "scsi",
+                    "disk_size": "1G",
+                    "storage_pool": "{{user `proxmox_storage_pool`}}",
+                    "storage_pool_type": "{{user `proxmox_storage_pool_type`}}",
+                    "format": "{{user `proxmox_storage_format`}}"
+                }
+            ],
+
+            "cloud_init": true,
+            "onboot": false,
+            "qemu_agent": true,
+            "unmount_iso": true,
+            "template_name": "{{user `template_name`}}",
+            "template_description": "{{user `template_description`}}",
+            "boot_wait": "10s",
+            "boot_command": [
+                "root<enter>",
+                "ifconfig eth0 up && udhcpc -i eth0<enter><wait5>",
+                "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answers<enter><wait>",
+                "setup-alpine -f ./answers<enter><wait5>",
+                "root<enter>",
+                "root<enter><wait30>",
+                "y<enter><wait1m>",
+                "mount /dev/sda2 /mnt<enter>",
+                "mount /dev /mnt/dev --bind<enter>",
+                "mount -t proc none /mnt/proc<enter>",
+                "mount -o bind /sys /mnt/sys<enter>",
+                "chroot /mnt /bin/ash -l<enter>",
+                "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/repositories -O /etc/apk/repositories<enter>",
+                "apk update<enter><wait5>",
+                "apk add qemu-guest-agent<enter><wait10>",
+                "VPORT=$(ls /dev/vport*)<enter>",
+                "sed -i -E \"s,^#*(GA_PATH)=.*,\\1=$VPORT,\" /etc/conf.d/qemu-guest-agent<enter>",
+                "sed -i -E 's/^#*(PermitRootLogin).*/\\1 yes/' /etc/ssh/sshd_config<enter>",
+                "rc-update add qemu-guest-agent<enter>",
+                "exit<enter>",
+                "reboot<enter>"
+            ]
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sed -i '/^ttyS0/d' /etc/inittab",
+                "apk update",
+                "apk add -f py3-pip sudo cloud-init@edgecommunity cloud-init-openrc@edgecommunity",
+                "rc-update add cloud-init",
+                "rc-update add cloud-config",
+                "rc-update add cloud-final",
+                "passwd -d root",
+                "passwd -l root",
+                "fstrim -v /"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "http/cloud.cfg",
+            "destination": "/etc/cloud/cloud.cfg"
+        }
+    ]
+}

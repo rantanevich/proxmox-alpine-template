@@ -1,0 +1,35 @@
+# Use US layout with US variant
+KEYMAPOPTS="us us"
+
+# Set hostname to alpine
+HOSTNAMEOPTS="-n alpine"
+
+# Contents of /etc/network/interfaces
+INTERFACESOPTS="auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    hostname alpine
+"
+
+# Search domain of example.com, Google public nameserver
+DNSOPTS="-n 192.168.8.254"
+
+# Set timezone to Europe/Minsk
+TIMEZONEOPTS="-z Europe/Minsk"
+
+# set http/ftp proxy
+PROXYOPTS="none"
+
+# Add a random mirror
+APKREPOSOPTS="-r"
+
+# Install Openssh
+SSHDOPTS="-c openssh"
+
+# Use openntpd
+NTPOPTS="-c chrony"
+
+# Use /dev/sda as a data disk
+DISKOPTS="-s 0 -m sys /dev/sda"

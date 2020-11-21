@@ -1,0 +1,5 @@
+http://mirror.yandex.ru/mirrors/alpine/v3.12/main
+http://mirror.yandex.ru/mirrors/alpine/v3.12/community
+@edge http://mirror.yandex.ru/mirrors/alpine/edge/main
+@edgecommunity http://mirror.yandex.ru/mirrors/alpine/edge/community
+@testing http://mirror.yandex.ru/mirrors/alpine/edge/testing
