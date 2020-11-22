@@ -85,8 +85,11 @@
             "type": "shell",
             "inline": [
                 "sed -i '/^ttyS0/d' /etc/inittab",
+                "rm -f /etc/cloud",
                 "apk update",
-                "apk add -f py3-pip sudo cloud-init@edgecommunity cloud-init-openrc@edgecommunity",
+                "apk add py3-pip sudo",
+                "apk add partx@edge ifupdown-ng@edge iproute2-minimal@edge",
+                "apk add cloud-init@edgecommunity cloud-init-openrc@edgecommunity",
                 "rc-update add cloud-init",
                 "rc-update add cloud-config",
                 "rc-update add cloud-final",
